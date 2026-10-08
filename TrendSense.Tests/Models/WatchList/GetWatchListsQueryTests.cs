@@ -12,6 +12,7 @@ namespace TrendSense.Tests.Models.WatchList
     {
         private readonly IMapper _mapper;
         private readonly Mock<ICurrentUserService> _currentUser;
+        private readonly Mock<ICacheService> _cache;
         private readonly GetWatchListsQueryHandler _handler;
 
         public GetWatchListsQueryTests()
@@ -27,8 +28,9 @@ namespace TrendSense.Tests.Models.WatchList
 
             _mapper = configurationProvider.CreateMapper();
             _currentUser = new Mock<ICurrentUserService>();
+            _cache = new Mock<ICacheService>();
 
-            _handler = new GetWatchListsQueryHandler(Context, _mapper, _currentUser.Object);
+            _handler = new GetWatchListsQueryHandler(Context, _mapper, _currentUser.Object, _cache.Object);
         }
 
         [Fact]

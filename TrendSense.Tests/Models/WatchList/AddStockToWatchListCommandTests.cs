@@ -9,13 +9,15 @@ namespace TrendSense.Tests.Models.WatchList
     public class AddStockToWatchListCommandTests : TestCrudBase
     {
         private readonly Mock<ICurrentUserService> _currentUser;
+        private readonly Mock<ICacheService> _cache;
         private readonly AddStockToWatchListCommandHandler _handler;
 
         public AddStockToWatchListCommandTests()
         {
             _currentUser = new Mock<ICurrentUserService>();
+            _cache = new Mock<ICacheService>();
 
-            _handler = new AddStockToWatchListCommandHandler(Context, _currentUser.Object);
+            _handler = new AddStockToWatchListCommandHandler(Context, _currentUser.Object, _cache.Object);
         }
 
         [Fact]

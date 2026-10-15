@@ -1,18 +1,28 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
+using TrendSense.Application.Common.Caching;
 using TrendSense.Application.Interfaces;
 
 namespace TrendSense.Application.Features.Stocks.Queries.GetDbStocks
 {
     public class GetDbStocksQueryHandler : IRequestHandler<GetDbStocksQuery, IReadOnlyList<StockDto>>
     {
-        public IAppDbContext _dbContext;
+        private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(1);
+        private readonly IAppDbContext _dbContext;
+        private readonly ICacheService _cache;
 
-        public GetDbStocksQueryHandler(IAppDbContext dbContext) => _dbContext = dbContext;
+        public GetDbStocksQueryHandler(IAppDbContext dbContext, ICacheService cache) => (_dbContext, _cache) = (dbContext, cache);
 
         public async Task<IReadOnlyList<StockDto>> Handle(GetDbStocksQuery request, CancellationToken cancellationToken)
         {
-            return await _dbContext.Stocks
+            var cached = await _cache.GetAsync<IReadOnlyList<StockDto>>(CacheKeys.Stocks, cancellationToken);
+
+            if (cached is not null)
+            {
+                return cached;
+            }
+
+            var stocks = await _dbContext.Stocks
                 .AsNoTracking()
                 .Select(stock => new StockDto
                 {
@@ -26,6 +36,10 @@ namespace TrendSense.Application.Features.Stocks.Queries.GetDbStocks
                     UpdatedAt = stock.UpdatedAt
                 })
                 .ToListAsync(cancellationToken);
+
+            await _cache.SetAsync(CacheKeys.Stocks, stocks, CacheExpiration, cancellationToken);
+
+            return stocks;
         }
     }
 }

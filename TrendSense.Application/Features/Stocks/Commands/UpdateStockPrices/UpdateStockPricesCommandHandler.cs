@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using TrendSense.Application.Common.Caching;
 using TrendSense.Application.Interfaces;
 using TrendSense.Domain;
 
@@ -7,10 +8,11 @@ namespace TrendSense.Application.Features.Stocks.Commands.UpdateStockPrices
     public class UpdateStockPricesCommandHandler : IRequestHandler<UpdateStockPricesCommand, Unit>
     {
         private readonly IAppDbContext _dbContext;
+        private readonly ICacheService _cache;
         private readonly IStockMarketService _stockMarketService;
 
-        public UpdateStockPricesCommandHandler(IAppDbContext dbContext, IStockMarketService stockMarketService) => 
-            (_dbContext, _stockMarketService) = (dbContext, stockMarketService);
+        public UpdateStockPricesCommandHandler(IAppDbContext dbContext, IStockMarketService stockMarketService, ICacheService cache) => 
+            (_dbContext, _stockMarketService, _cache) = (dbContext, stockMarketService, cache);
 
         public async Task<Unit> Handle(UpdateStockPricesCommand request, CancellationToken cancellationToken)
         {
@@ -19,6 +21,8 @@ namespace TrendSense.Application.Features.Stocks.Commands.UpdateStockPrices
             var stocks = _dbContext.Stocks.ToList();
 
             var marketStocksByTicker = marketStocks.Where(x => x is not null).ToDictionary(x => x!.SecId);
+
+            var updatedStockIds = new HashSet<Guid>();
 
             foreach(var stock in stocks)
             {
@@ -30,6 +34,8 @@ namespace TrendSense.Application.Features.Stocks.Commands.UpdateStockPrices
                 stock.LastPrice = marketStock!.Last ?? stock.LastPrice;
                 stock.DayChange = marketStock.Change ?? stock.DayChange;
                 stock.DayChangePercent = marketStock.ChangePercent ?? stock.DayChangePercent;
+
+                updatedStockIds.Add(stock.Id);
 
                 stock.UpdatedAt = marketStock.Time ?? DateTime.Now;
 
@@ -46,6 +52,13 @@ namespace TrendSense.Application.Features.Stocks.Commands.UpdateStockPrices
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);
+
+            await _cache.RemoveAsync(CacheKeys.Stocks, cancellationToken);
+
+            foreach (var stockId in updatedStockIds)
+            {
+                await _cache.RemoveAsync(CacheKeys.PriceHistory(stockId), cancellationToken);
+            }
 
             return Unit.Value;
         }

@@ -1,4 +1,6 @@
-﻿using TrendSense.Application.Features.Stocks.Queries.GetDbStocks;
+﻿using Moq;
+using TrendSense.Application.Features.Stocks.Queries.GetDbStocks;
+using TrendSense.Application.Interfaces;
 using TrendSense.Tests.Common;
 
 namespace TrendSense.Tests.Models.Stocks
@@ -6,10 +8,12 @@ namespace TrendSense.Tests.Models.Stocks
     public class GetDbStocksQueryTests : TestCrudBase
     {
         private readonly GetDbStocksQueryHandler _handler;
+        private readonly Mock<ICacheService> _cache;
 
         public GetDbStocksQueryTests()
         {
-            _handler = new GetDbStocksQueryHandler(Context);
+            _cache = new Mock<ICacheService>();
+            _handler = new GetDbStocksQueryHandler(Context, _cache.Object);
         }
 
         [Fact]

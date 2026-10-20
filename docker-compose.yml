@@ -1,7 +1,7 @@
 services:
     trendsense-api:
         build:
-            context: .
+            context: ./TrendSense.Backend
             dockerfile: Dockerfile
         container_name: trendsense-api
         ports:

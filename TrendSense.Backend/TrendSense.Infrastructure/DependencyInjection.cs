@@ -35,6 +35,20 @@ namespace TrendSense.Infrastructure
                 }));
 
                 pipelineBuilder.AddTimeout(TimeSpan.FromSeconds(5));
+
+                pipelineBuilder.AddRetry(new HttpRetryStrategyOptions
+                {
+                    ShouldHandle = static args =>
+                    {
+                        return ValueTask.FromResult(args is
+                        {
+                            Outcome.Exception: HttpRequestException
+                        } || (args.Outcome.Result?.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.RequestTimeout));
+                    },
+                    BackoffType = DelayBackoffType.Exponential,
+                    UseJitter = true,
+                    MaxRetryAttempts = 3
+                });
             });
 
             services.AddScoped<ICacheService, RedisCacheService>();

@@ -14,8 +14,8 @@ const route = useRoute()
 const pageTitle = computed(() => route.name === 'watchlists' ? 'Отслеживаемые списки' : 'Рынок')
 
 const navigation = [
-  { label: 'Обзор рынка', to '/', icon: LayoutDashboard },
-  { label: 'Отслеживаемые списки', to '/watchlists', icon: Star },
+  { label: 'Обзор рынка', to: '/', icon: LayoutDashboard },
+  { label: 'Отслеживаемые списки', to: '/watchlists', icon: Star },
 ]
 </script>
 

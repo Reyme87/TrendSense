@@ -598,3 +598,105 @@ h1 {
 .spinning {
   animation: spin 1s linear infinite;
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 950px) {
+  .sidebar {
+    width: 215px;
+  }
+
+  .topbar,
+  .main-content {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .stats-grid {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 17px;
+  }
+}
+
+@media (max-width: 700px) {
+  .sidebar {
+    width: 67px;
+    padding: 20px 9px;
+  }
+
+  .brand {
+    justify-content: center;
+    padding: 0;
+    margin-bottom: 38px;
+  }
+
+  .brand > span:last-child,
+  .nav-caption,
+  .nav-link span,
+  .sidebar-bottom > div:last-child {
+    display: none;
+  }
+
+  .nav-link {
+    justify-content: center;
+    padding: 13px 7px;
+  }
+
+  .sidebar-bottom {
+    justify-content: center;
+    padding: 15px 0;
+  }
+
+  .topbar {
+    min-height: 65px;
+    padding: 0 15px;
+  }
+
+  .topbar-actions {
+    gap: 11px;
+  }
+
+  .profile-info,
+  .profile > svg,
+  .topbar-divider {
+    display: none;
+  }
+
+  .main-content {
+    padding: 27px 15px;
+  }
+
+  .page-heading {
+    align-items: flex-start;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 16px 18px;
+  }
+
+  .stat-value {
+    margin-bottom: 8px;
+    font-size: 25px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+}

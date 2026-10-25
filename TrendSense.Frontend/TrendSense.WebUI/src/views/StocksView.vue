@@ -10,6 +10,7 @@ import {
 
 import { getStocks } from '../services/stocks';
 import type { StockDto } from '../types/stockDto';
+import { RouterLink } from 'vue-router'
 
 const stocks = ref<StockDto[]>([])
 const search = ref('')
@@ -226,9 +227,11 @@ onMounted(loadStocks)
                   </div>
 
                   <div>
-                    <strong class="ticker">
+                    <RouterLink
+                      :to="`/stocks/${stock.id}`"
+                      class="stock-detail-link">
                       {{ stock.tickerSymbol }}
-                    </strong>
+                    </RouterLink>
 
                     <div class="stock-name">
                       {{ stock.name }}

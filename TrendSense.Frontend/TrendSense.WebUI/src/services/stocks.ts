@@ -15,7 +15,7 @@ export async function getStocks(): Promise<StockDto[]>
 
 export async function getPriceHistory(stockId: string): Promise<PriceHistoryDto[]>
 {
-    const response = await fetch(`/api/v1/Stocks/${encodeURIComponent(stockId)}`)
+    const response = await fetch(`/api/v1/Stocks/${encodeURIComponent(stockId)}/history`)
 
     if (!response.ok)
     {

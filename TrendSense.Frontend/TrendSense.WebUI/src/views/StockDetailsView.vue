@@ -273,6 +273,58 @@ onMounted(loadDetails)
     </div>
 
     <template v-else-if="stock">
+      <section class="market-section watchlist-add-section">
+        <div class="section-heading">
+          <div>
+            <h2>Добавить в список наблюдения</h2>
+            <p>Сохрани {{ stock.tickerSymbol }} в одном из своих списков.</p>
+          </div>
+        </div>
+
+        <div class="watchlist-add-controls">
+          <template v-if="watchlists.length > 0">
+            <select
+              v-model="selectedWatchlistId"
+              aria-label="Выбрать список наблюдения"
+            >
+              <option
+                v-for="list in watchlists"
+                :key="list.id"
+                :value="list.id"
+              >
+                {{ list.name }}
+              </option>
+            </select>
+
+            <button
+              class="button-primary"
+              type="button"
+              :disabled="watchlistLoading"
+              @click="addCurrentStockToWatchlist"
+            >
+              <Plus :size="17" />
+              Добавить акцию
+            </button>
+          </template>
+
+          <RouterLink
+            v-else
+            to="/watchlists"
+            class="button-secondary"
+          >
+            Открыть списки наблюдения
+          </RouterLink>
+        </div>
+
+        <p v-if="watchlistError" class="notice notice-error">
+          {{ watchlistError }}
+        </p>
+
+        <p v-if="watchlistSuccess" class="notice notice-success">
+          {{ watchlistSuccess }}
+        </p>
+      </section>
+
       <div class="stats-grid">
         <article class="stat-card">
           <div class="stat-label">Последняя цена</div>

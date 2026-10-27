@@ -140,6 +140,56 @@ const chartOptions: ChartOptions<'line'> = {
   },
 }
 
+async function loadStockWatchlists() {
+  watchlistLoading.value = true
+  watchlistError.value = ''
+
+  try {
+    watchlists.value = await getWatchlists()
+
+    if (
+      !watchlists.value.some(
+        (list) => list.id === selectedWatchlistId.value,
+      )
+    ) {
+      selectedWatchlistId.value =
+        watchlists.value[0]?.id ?? ''
+    }
+  } catch (e) {
+    watchlistError.value =
+      e instanceof Error
+        ? e.message
+        : 'Не удалось загрузить списки'
+  } finally {
+    watchlistLoading.value = false
+  }
+}
+
+async function addCurrentStockToWatchlist() {
+  const stockId = stock.value?.id
+  const watchlistId = selectedWatchlistId.value
+
+  if (!stockId || !watchlistId) {
+    watchlistError.value = 'Сначала выбери список.'
+    return
+  }
+
+  watchlistError.value = ''
+  watchlistSuccess.value = ''
+
+  try {
+    await addStockToWatchlist(watchlistId, stockId)
+
+    watchlistSuccess.value = 'Акция добавлена в список.'
+    await loadStockWatchlists()
+  } catch (e) {
+    watchlistError.value =
+      e instanceof Error
+        ? e.message
+        : 'Не удалось добавить акцию'
+  }
+}
+
 async function loadDetails() {
   loading.value = true
   error.value = ''
@@ -170,6 +220,8 @@ async function loadDetails() {
   } finally {
     loading.value = false
   }
+
+  await loadStockWatchlists()
 }
 
 onMounted(loadDetails)

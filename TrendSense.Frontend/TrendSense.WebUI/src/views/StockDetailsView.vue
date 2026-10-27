@@ -16,9 +16,15 @@ import {
   type ChartOptions,
 } from 'chart.js'
 
+import {
+  getWatchlists,
+  addStockToWatchlist,
+} from '../services/watchlists'
+
 import { getStocks, getPriceHistory } from '../services/stocks'
 import type { StockDto } from '../types/stockDto'
 import type { PriceHistoryDto } from '../types/priceHistory'
+import type { WatchListDto } from '../types/watchListDto'
 
 ChartJS.register(
   CategoryScale,
@@ -36,6 +42,11 @@ const stock = ref<StockDto | null>(null)
 const history = ref<PriceHistoryDto[]>([])
 const loading = ref(true)
 const error = ref('')
+const watchlists = ref<WatchListDto[]>([])
+const selectedWatchlistId = ref('')
+const watchlistLoading = ref(false)
+const watchlistError = ref('')
+const watchlistSuccess = ref('')
 
 const currency = computed(() => stock.value?.currency || 'RUB')
 

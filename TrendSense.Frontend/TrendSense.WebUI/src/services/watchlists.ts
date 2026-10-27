@@ -1,5 +1,4 @@
 import type { WatchListDto } from "../types/watchListDto"
-import type { WatchListItemDto } from "../types/watchListItemDto"
 
 const BASE_URL = '/api/v1/WatchLists'
 

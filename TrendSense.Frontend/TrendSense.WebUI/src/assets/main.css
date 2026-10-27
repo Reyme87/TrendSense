@@ -954,3 +954,33 @@ h1 {
     width: 100%;
   }
 }
+
+.watchlist-add-section {
+  margin-bottom: 22px;
+}
+
+.watchlist-add-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 0 23px 23px;
+}
+
+.watchlist-add-controls select {
+  flex: 1;
+  min-width: 180px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  background: #0d141e;
+}
+
+@media (max-width: 700px) {
+  .watchlist-add-controls {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0 18px 18px;
+  }
+}

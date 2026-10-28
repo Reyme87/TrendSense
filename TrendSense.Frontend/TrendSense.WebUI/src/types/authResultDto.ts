@@ -1,4 +1,4 @@
-export interface LoginResponse {
+export interface AuthResultDto {
   token: string
   expiresAt: string
 }

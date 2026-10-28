@@ -9,6 +9,19 @@ import {
   ChevronDown
 } from 'lucide-vue-next'
 
+import { useRouter } from 'vue-router'
+import {
+  clearAccessToken,
+  isAuthenticated,
+} from './services/auth'
+
+const appRouter = useRouter()
+
+async function logout() {
+  clearAccessToken()
+  await appRouter.replace({ name: 'market' })
+}
+
 const route = useRoute()
 
 const pageTitle = computed(() => route.name === 'watchlists' ? 'Отслеживаемые списки' : 'Рынок')
@@ -77,16 +90,22 @@ const navigation = [
 
           <div class="topbar-divider"></div>
 
-          <div class="profile">
-            <div class="avatar">TS</div>
+          <RouterLink
+            v-if="!isAuthenticated"
+            to="/login"
+            class="button-secondary"
+          >
+            Войти
+          </RouterLink>
 
-            <div class="profile-info">
-              <strong>Пользователь</strong>
-              <small>Market analyst</small>
-            </div>
-
-            <ChevronDown :size="16" />
-          </div>
+          <button
+            v-else
+            type="button"
+            class="button-secondary"
+            @click="logout"
+          >
+            Выйти
+          </button>
         </div>
       </header>
 

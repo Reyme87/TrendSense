@@ -1,45 +1,37 @@
 import type { WatchListDto } from "../types/watchListDto"
+import {
+  clearAccessToken,
+  getAccessToken,
+} from './auth'
 
 const BASE_URL = '/api/v1/WatchLists'
-
-export function getAccessToken(): string
-{
-    return sessionStorage.getItem('trendsense_access_token') ?? ''
-}
 
 export function saveAccessToken(token: string): void
 {
     sessionStorage.setItem('trendsense_access_token', token)
 }
 
-export function clearAccessToken(): void
-{
-    sessionStorage.removeItem('trendsense_access_token')
-}
-
 async function apiRequest<T>(url: string, init: RequestInit = {}): Promise<T> 
 {
     const token = getAccessToken()
-    
-    if (!token)
-    {
-        throw new Error('Для работы со списками нужна аутентификация')
+
+    if (!token) {
+      throw new Error('Необходимо войти в аккаунт.')
     }
 
     const headers = new Headers(init.headers)
     headers.set('Accept', 'application/json')
     headers.set('Authorization', `Bearer ${token}`)
 
-    if (init.body)
-    {
-        headers.set('Content-type', 'application/json')
+    if (init.body) {
+      headers.set('Content-Type', 'application/json')
     }
 
     const response = await fetch(url, {...init, headers})
 
-    if (response.status === 401)
-    {
-        throw new Error('Сессия истекла или JWT-токен недействителен')
+    if (response.status === 401) {
+      clearAccessToken()
+      throw new Error('Сессия истекла. Войди в аккаунт повторно.')
     }
 
     if (response.status === 403) {

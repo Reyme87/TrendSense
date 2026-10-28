@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { isAuthenticated } from '../services/auth'
+
 import {
   Plus,
   RefreshCw,
   Trash2,
-  LogOut,
   LockKeyhole,
 } from 'lucide-vue-next'
 
@@ -12,29 +14,25 @@ import {
   getWatchlists,
   createWatchlist,
   removeStockFromWatchlist,
-  getAccessToken,
-  saveAccessToken,
-  clearAccessToken,
 } from '../services/watchlists'
 
+import { getStocks } from '../services/stocks'
+
 import type { WatchListDto } from '../types/watchListDto'
+import type { StockDto } from '../types/stockDto'
+
+const router = useRouter()
 
 const watchlists = ref<WatchListDto[]>([])
-const tokenInput = ref('')
 const newListName = ref('')
 
-const connected = ref(false)
 const loading = ref(false)
 const creating = ref(false)
 const error = ref('')
 const success = ref('')
 
-onMounted(async () => {
-  connected.value = Boolean(getAccessToken())
-
-  if (connected.value) {
-    await loadWatchlists()
-  }
+onMounted(() => {
+  void loadWatchlists()
 })
 
 async function loadWatchlists() {
@@ -43,38 +41,41 @@ async function loadWatchlists() {
   success.value = ''
 
   try {
-    watchlists.value = await getWatchlists()
+    const lists = await getWatchlists()
+
+    let stocks: StockDto[] = []
+
+    try {
+      stocks = await getStocks()
+    } catch {
+    }
+
+    const stocksById = new Map(
+      stocks.map((stock) => [stock.id, stock]),
+    )
+
+    watchlists.value = lists.map((list) => ({
+      ...list,
+      items: (list.items ?? []).map((item) => ({
+        ...item,
+        stock: item.stock ?? stocksById.get(item.stockId),
+      })),
+    }))
   } catch (e) {
     error.value =
       e instanceof Error
         ? e.message
-        : 'Не удалось загрузить списки'
+        : 'Не удалось загрузить списки.'
+
+    if (!isAuthenticated.value) {
+      await router.replace({
+        name: 'login',
+        query: { redirect: '/watchlists' },
+      })
+    }
   } finally {
     loading.value = false
   }
-}
-
-async function connect() {
-  const token = tokenInput.value.trim()
-
-  if (!token) {
-    error.value = 'Введи JWT-токен.'
-    return
-  }
-
-  saveAccessToken(token)
-  connected.value = true
-
-  await loadWatchlists()
-}
-
-function disconnect() {
-  clearAccessToken()
-  connected.value = false
-  tokenInput.value = ''
-  watchlists.value = []
-  error.value = ''
-  success.value = ''
 }
 
 async function createList() {
@@ -91,6 +92,7 @@ async function createList() {
 
   try {
     await createWatchlist(name)
+
     newListName.value = ''
 
     await loadWatchlists()
@@ -99,7 +101,14 @@ async function createList() {
     error.value =
       e instanceof Error
         ? e.message
-        : 'Не удалось создать список'
+        : 'Не удалось создать список.'
+
+    if (!isAuthenticated.value) {
+      await router.replace({
+        name: 'login',
+        query: { redirect: '/watchlists' },
+      })
+    }
   } finally {
     creating.value = false
   }
@@ -113,10 +122,7 @@ async function removeStock(
   success.value = ''
 
   try {
-    await removeStockFromWatchlist(
-      watchlistId,
-      stockId,
-    )
+    await removeStockFromWatchlist(watchlistId, stockId)
 
     await loadWatchlists()
     success.value = 'Акция удалена из списка.'
@@ -124,7 +130,14 @@ async function removeStock(
     error.value =
       e instanceof Error
         ? e.message
-        : 'Не удалось удалить акцию'
+        : 'Не удалось удалить акцию.'
+
+    if (!isAuthenticated.value) {
+      await router.replace({
+        name: 'login',
+        query: { redirect: '/watchlists' },
+      })
+    }
   }
 }
 </script>
@@ -134,15 +147,17 @@ async function removeStock(
     <div class="page-heading">
       <div>
         <div class="eyebrow">YOUR WORKSPACE</div>
+
         <h1>Списки наблюдения</h1>
+
         <p class="page-description">
           Управляй инструментами, за которыми следишь.
         </p>
       </div>
 
       <button
-        v-if="connected"
         class="button-secondary"
+        type="button"
         :disabled="loading"
         @click="loadWatchlists"
       >
@@ -154,51 +169,6 @@ async function removeStock(
       </button>
     </div>
 
-    <section class="market-section auth-section">
-      <div class="section-heading">
-        <div>
-          <h2>Подключение к API</h2>
-          <p>
-            Для работы со списками нужна авторизация.
-          </p>
-        </div>
-
-        <button
-          v-if="connected"
-          class="button-secondary"
-          @click="disconnect"
-        >
-          <LogOut :size="16" />
-          Отключиться
-        </button>
-      </div>
-
-      <form
-        v-if="!connected"
-        class="watchlist-form token-form"
-        @submit.prevent="connect"
-      >
-        <LockKeyhole :size="18" />
-
-        <input
-          v-model="tokenInput"
-          type="password"
-          autocomplete="off"
-          placeholder="Вставь JWT access token"
-          aria-label="JWT access token"
-        />
-
-        <button class="button-primary" type="submit">
-          Подключить
-        </button>
-      </form>
-
-      <div v-else class="connected-label">
-        <span class="connection-dot"></span>
-        JWT-токен сохранён в сессии браузера
-      </div>
-    </section>
-
     <div v-if="error" class="notice notice-error">
       {{ error }}
     </div>
@@ -207,109 +177,135 @@ async function removeStock(
       {{ success }}
     </div>
 
-    <template v-if="connected">
-      <section class="market-section create-list-section">
-        <div class="section-heading">
+    <section class="market-section create-list-section">
+      <div class="section-heading">
+        <div>
+          <h2>Создать список</h2>
+
+          <p>
+            Например, «Долгосрочные инвестиции».
+          </p>
+        </div>
+      </div>
+
+      <form
+        class="watchlist-form"
+        @submit.prevent="createList"
+      >
+        <input
+          v-model="newListName"
+          maxlength="100"
+          placeholder="Название нового списка"
+          aria-label="Название списка"
+          required
+        />
+
+        <button
+          class="button-primary"
+          type="submit"
+          :disabled="creating"
+        >
+          <Plus :size="17" />
+
+          {{
+            creating
+              ? 'Создание...'
+              : 'Создать список'
+          }}
+        </button>
+      </form>
+    </section>
+
+    <div v-if="loading && watchlists.length === 0" class="feedback">
+      Загружаем списки наблюдения...
+    </div>
+
+    <div v-else class="watchlists-grid">
+      <article
+        v-for="list in watchlists"
+        :key="list.id"
+        class="watchlist-card"
+      >
+        <div class="watchlist-card-header">
           <div>
-            <h2>Создать список</h2>
-            <p>Например, «Долгосрочные инвестиции».</p>
+            <h2>{{ list.name }}</h2>
+
+            <p>
+              {{ list.items?.length ?? 0 }} инструментов
+            </p>
           </div>
+
+          <span class="watchlist-icon">
+            <LockKeyhole :size="19" />
+          </span>
         </div>
 
-        <form
-          class="watchlist-form"
-          @submit.prevent="createList"
+        <div
+          v-if="!list.items?.length"
+          class="watchlist-empty"
         >
-          <input
-            v-model="newListName"
-            maxlength="100"
-            placeholder="Название нового списка"
-            aria-label="Название списка"
-          />
+          В этом списке пока нет акций.
 
-          <button
-            class="button-primary"
-            type="submit"
-            :disabled="creating"
-          >
-            <Plus :size="17" />
-            {{ creating ? 'Создание...' : 'Создать список' }}
-          </button>
-        </form>
-      </section>
+          Добавь инструмент со страницы акции.
+        </div>
 
-      <div class="watchlists-grid">
-        <article
-          v-for="list in watchlists"
-          :key="list.id"
-          class="watchlist-card"
-        >
-          <div class="watchlist-card-header">
-            <div>
-              <h2>{{ list.name }}</h2>
-              <p>
-                {{ list.items?.length ?? 0 }} инструментов
-              </p>
-            </div>
-
-            <span class="watchlist-icon">
-              <LockKeyhole :size="19" />
-            </span>
-          </div>
-
+        <div v-else class="watchlist-items">
           <div
-            v-if="!list.items?.length"
-            class="watchlist-empty"
+            v-for="item in list.items"
+            :key="item.id ?? item.stockId"
+            class="watchlist-item"
           >
-            В этом списке пока нет акций.
-            Добавь инструмент со страницы акции.
-          </div>
+            <div class="watchlist-stock-info">
+              <strong>
+                {{
+                  item.stock?.tickerSymbol ??
+                  item.stock?.name ??
+                  'Акция недоступна'
+                }}
+              </strong>
 
-          <div v-else class="watchlist-items">
-            <div
-              v-for="item in list.items"
-              :key="item.id ?? item.stockId"
-              class="watchlist-item"
-            >
-              <div class="watchlist-stock-info">
-                <strong>
-                  {{
-                    item.stock?.tickerSymbol ??
-                    item.stock?.name ??
-                    item.stockId
-                  }}
-                </strong>
+              <small v-if="item.stock?.tickerSymbol && item.stock?.name">
+                {{ item.stock.name }}
+              </small>
 
-                <small v-if="item.stock?.name">
-                  {{ item.stock.name }}
-                </small>
-              </div>
-
-              <button
-                class="remove-button"
-                type="button"
-                title="Удалить акцию из списка"
-                aria-label="Удалить акцию из списка"
-                @click="
-                  removeStock(list.id, item.stockId)
-                "
-              >
-                <Trash2 :size="16" />
-              </button>
+              <small v-if="item.stock?.lastPrice != null">
+                {{
+                  item.stock.lastPrice.toLocaleString('ru-RU', {
+                    maximumFractionDigits: 2,
+                  })
+                }}
+                {{ item.stock.currency ?? '' }}
+              </small>
             </div>
+
+            <button
+              class="remove-button"
+              type="button"
+              title="Удалить акцию из списка"
+              aria-label="Удалить акцию из списка"
+              @click="removeStock(list.id, item.stockId)"
+            >
+              <Trash2 :size="16" />
+            </button>
           </div>
-        </article>
+        </div>
+      </article>
+    </div>
+
+    <div
+      v-if="!loading && watchlists.length === 0"
+      class="empty-state"
+    >
+      <div class="empty-state-icon">
+        <LockKeyhole :size="27" />
       </div>
 
-      <div
-        v-if="!loading && watchlists.length === 0"
-        class="empty-state"
-      >
-        <h2>Списков пока нет</h2>
-        <p>
-          Создай первый список, чтобы группировать интересующие акции.
-        </p>
-      </div>
-    </template>
+      <h2>Списков пока нет</h2>
+
+      <p>
+        Создай первый список, чтобы группировать
+        интересующие тебя акции.
+      </p>
+    </div>
   </section>
 </template>

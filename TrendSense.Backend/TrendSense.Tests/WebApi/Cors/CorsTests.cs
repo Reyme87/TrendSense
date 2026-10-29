@@ -34,9 +34,27 @@ namespace TrendSense.Tests.WebApi.Cors
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Origins", out var values));
+            Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Origin", out var values));
 
             Assert.Contains(AllowedOrigin, values);
+        }
+
+        [Fact]
+        public async Task Get_DeniedOrigin_DoesNotReturnCorsHeaders()
+        {
+            // Arrange
+            using var server = CreateServer();
+            using var client = server.CreateClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/test");
+
+            // Act
+            request.Headers.Add("Origin", DeniedOrigin);
+
+            using var response = await client.SendAsync(request);
+
+            // Assert
+            Assert.False(response.Headers.Contains("Access-Control-Allow-Origin"));
         }
 
         private static TestServer CreateServer()

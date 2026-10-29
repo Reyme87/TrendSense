@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net;
 using TrendSense.WebApi;
 using Xunit;
 
@@ -16,6 +17,27 @@ namespace TrendSense.Tests.WebApi.Cors
 
         private const string DeniedOrigin =
             "https://untrusted.example.com";
+
+        [Fact]
+        public async Task Get_AllowedOrigins_ReturnsCorsHeaders()
+        {
+            // Arrange
+            using var server = CreateServer();
+            using var client = server.CreateClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/test");
+
+            // Act
+            request.Headers.Add("Origin", AllowedOrigin);
+
+            using var response = await client.SendAsync(request);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Origins", out var values));
+
+            Assert.Contains(AllowedOrigin, values);
+        }
 
         private static TestServer CreateServer()
         {

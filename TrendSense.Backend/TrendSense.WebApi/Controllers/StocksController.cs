@@ -17,28 +17,6 @@ namespace TrendSense.WebApi.Controllers
     {
         public StocksController(IMediator mediator) : base(mediator) { }
 
-        ///// <summary>
-        ///// Gets the stock by its SecId
-        ///// </summary>
-        ///// <param name="command"></param>
-        ///// <returns>
-        ///// Returns StockMarketInfo
-        ///// </returns>
-        ///// <response code="200">Success</response>
-        ///// <response code="401">If the user is unauthorized</response>
-        //[HttpGet]
-        //[ProducesResponseType(StatusCodes.Status200OK)]
-        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        //public async Task<ActionResult<StockMarketInfo>> Get([FromQuery] GetStockQuery query, CancellationToken cancellationToken)
-        //{
-        //    var result = await Mediator.Send(query, cancellationToken);
-
-        //    if (result is null)
-        //        return NotFound();
-
-        //    return Ok(result);
-        //}
-
         /// <summary>
         /// Gets stocks list
         /// </summary>
@@ -51,7 +29,7 @@ namespace TrendSense.WebApi.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<StockDto>> Get([FromQuery] GetDbStocksQuery query, CancellationToken cancellationToken)
+        public async Task<ActionResult<PagedResult<StockDto>>> Get([FromQuery] GetDbStocksQuery query, CancellationToken cancellationToken)
         {
             var result = await Mediator.Send(query, cancellationToken);
 

@@ -108,6 +108,8 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+builder.Services.AddFrontendCors(builder.Configuration);
+
 var app = builder.Build();
 
 var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
@@ -126,6 +128,14 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseCustomExceptionHandler();
+
+app.UseHttpsRedirection();
+app.UseCors(CorsConfigurationExtension.PolicyName);
+
+app.UseSerilogRequestLogging();
+
+app.UseApiVersioning();
 app.UseSwagger();
 app.UseSwaggerUI(config =>
 {
@@ -136,15 +146,13 @@ app.UseSwaggerUI(config =>
     }
 });
 
-app.UseCustomExceptionHandler();
-app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
-
-app.UseRateLimiter();
+app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseApiVersioning();
+
+app.UseRateLimiter();
+
 app.MapControllers();
 
 app.Run();

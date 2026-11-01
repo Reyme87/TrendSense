@@ -12,6 +12,25 @@ import { getStocks } from '../services/stocks';
 import type { StockDto } from '../types/stockDto';
 import { RouterLink } from 'vue-router'
 
+const currentPage = ref(1)
+const pageSize = ref(20)
+
+const totalCount = ref(0)
+const totalPages = ref(0)
+
+const startRecord = computed(() =>
+  totalCount.value === 0
+    ? 0
+    : (currentPage.value - 1) * pageSize.value + 1,
+)
+
+const endRecord = computed(() =>
+  Math.min(
+    currentPage.value * pageSize.value,
+    totalCount.value,
+  ),
+)
+
 const stocks = ref<StockDto[]>([])
 const search = ref('')
 const loading = ref(false)
@@ -44,12 +63,20 @@ const fallingStocks = computed(
     ).length,
 )
 
-async function loadStocks() {
+async function loadStocks(targetPage = currentPage.value) {
   loading.value = true
   error.value = ''
 
   try {
-    stocks.value = await getStocks()
+    const result = await getStocks(
+      targetPage,
+      pageSize.value,
+    )
+
+    stocks.value = result.items
+    currentPage.value = result.page
+    totalCount.value = result.totalCount
+    totalPages.value = result.totalPages
   } catch (e) {
     error.value =
       e instanceof Error
@@ -58,6 +85,22 @@ async function loadStocks() {
   } finally {
     loading.value = false
   }
+}
+
+function previousPage() {
+  if (currentPage.value > 1) {
+    void loadStocks(currentPage.value - 1)
+  }
+}
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) {
+    void loadStocks(currentPage.value + 1)
+  }
+}
+
+function changePageSize() {
+  void loadStocks(1)
 }
 
 function formatPrice(
@@ -130,7 +173,7 @@ onMounted(loadStocks)
         class="button-secondary"
         type="button"
         :disabled="loading"
-        @click="loadStocks"
+        @click="loadStocks()"
       >
         <RefreshCw :size="17" :class="{ spinning: loading }" />
         Обновить
@@ -140,7 +183,7 @@ onMounted(loadStocks)
     <div class="stats-grid">
       <article class="stat-card">
         <div class="stat-label">Инструменты в базе</div>
-        <div class="stat-value">{{ stocks.length }}</div>
+        <div class="stat-value">{{ totalCount }}</div>
         <div class="stat-note">Доступны для просмотра</div>
       </article>
 
@@ -187,7 +230,7 @@ onMounted(loadStocks)
       <div v-if="error" class="feedback error-feedback">
         <strong>Не удалось загрузить котировки</strong>
         <p>{{ error }}</p>
-        <button class="button-secondary" @click="loadStocks">
+        <button class="button-secondary" @click="loadStocks()">
           Повторить
         </button>
       </div>
@@ -282,6 +325,49 @@ onMounted(loadStocks)
       <div class="table-footer">
         <span>Данные из TrendSense API</span>
         <span>{{ loading ? 'Обновление...' : ' ' }}</span>
+      </div>
+
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          Показано {{ startRecord }}–{{ endRecord }}
+          из {{ totalCount }}
+        </div>
+
+        <div class="pagination-controls">
+          <label>
+            На странице:
+
+            <select
+              v-model.number="pageSize"
+              @change="changePageSize"
+            >
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+          </label>
+
+          <button
+            class="pagination-button"
+            :disabled="currentPage <= 1 || loading"
+            @click="previousPage"
+          >
+            Назад
+          </button>
+
+          <span class="pagination-current">
+            {{ currentPage }} / {{ Math.max(totalPages, 1) }}
+          </span>
+
+          <button
+            class="pagination-button"
+            :disabled="currentPage >= totalPages || loading"
+            @click="nextPage"
+          >
+            Далее
+          </button>
+        </div>
       </div>
     </section>
   </section>

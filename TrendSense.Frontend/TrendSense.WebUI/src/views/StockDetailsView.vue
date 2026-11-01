@@ -21,10 +21,11 @@ import {
   addStockToWatchlist,
 } from '../services/watchlists'
 
-import { getStocks, getPriceHistory } from '../services/stocks'
+import { getPriceHistory } from '../services/stocks'
 import type { StockDto } from '../types/stockDto'
 import type { PriceHistoryDto } from '../types/priceHistory'
 import type { WatchListDto } from '../types/watchListDto'
+import { getStockById } from '../services/stocks'
 
 ChartJS.register(
   CategoryScale,
@@ -196,10 +197,8 @@ async function loadDetails() {
 
   try {
     const stockId = String(route.params.id)
-    const stocks = await getStocks()
 
-    stock.value =
-      stocks.find((item) => item.id === stockId) ?? null
+    stock.value = await getStockById(stockId)
 
     if (!stock.value) {
       throw new Error('Акция не найдена в базе данных')

@@ -1,5 +1,5 @@
 ﻿using MediatR;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using TrendSense.Application.Common.Caching;
 using TrendSense.Application.Dtos;
 using TrendSense.Application.Interfaces;

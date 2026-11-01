@@ -1,5 +1,5 @@
 ﻿using MediatR;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using TrendSense.Application.Features.Stocks.Queries.GetDbStocks;
 using TrendSense.Application.Interfaces;
 

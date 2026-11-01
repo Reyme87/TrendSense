@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { isAuthenticated } from '../services/auth'
+import { getStockById } from '../services/stocks'
 
 import {
   Plus,
@@ -16,10 +17,8 @@ import {
   removeStockFromWatchlist,
 } from '../services/watchlists'
 
-import { getStocks } from '../services/stocks'
 
 import type { WatchListDto } from '../types/watchListDto'
-import type { StockDto } from '../types/stockDto'
 
 const router = useRouter()
 
@@ -42,16 +41,30 @@ async function loadWatchlists() {
 
   try {
     const lists = await getWatchlists()
+    
+    const unresolvedStockIds = [
+      ...new Set(
+        lists.flatMap((list) => list.items ?? [])
+          .filter((item) => !item.stock)
+          .map((item) => item.stockId),
+      ),
+    ]
 
-    let stocks: StockDto[] = []
-
-    try {
-      stocks = await getStocks()
-    } catch {
-    }
+    // Получаем недостающие акции по ID.
+    const resolvedStocks = await Promise.all(
+      unresolvedStockIds.map(async (stockId) => {
+        try {
+          return await getStockById(stockId)
+        } catch {
+          return null
+        }
+      }),
+    )
 
     const stocksById = new Map(
-      stocks.map((stock) => [stock.id, stock]),
+      resolvedStocks
+        .filter((stock) => stock !== null)
+        .map((stock) => [stock.id, stock]),
     )
 
     watchlists.value = lists.map((list) => ({

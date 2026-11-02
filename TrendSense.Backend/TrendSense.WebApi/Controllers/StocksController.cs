@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TrendSense.Application.Dtos;
 using TrendSense.Application.Features.Stocks.Commands.SyncStocks;
 using TrendSense.Application.Features.Stocks.Commands.UpdateStockPrices;
+using TrendSense.Application.Features.Stocks.Queries.GetDbStockById;
 using TrendSense.Application.Features.Stocks.Queries.GetDbStocks;
 using TrendSense.Application.Features.Stocks.Queries.GetPriceHistory;
 using TrendSense.Application.Features.Stocks.Queries.GetStock;
@@ -17,28 +18,6 @@ namespace TrendSense.WebApi.Controllers
     {
         public StocksController(IMediator mediator) : base(mediator) { }
 
-        ///// <summary>
-        ///// Gets the stock by its SecId
-        ///// </summary>
-        ///// <param name="command"></param>
-        ///// <returns>
-        ///// Returns StockMarketInfo
-        ///// </returns>
-        ///// <response code="200">Success</response>
-        ///// <response code="401">If the user is unauthorized</response>
-        //[HttpGet]
-        //[ProducesResponseType(StatusCodes.Status200OK)]
-        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        //public async Task<ActionResult<StockMarketInfo>> Get([FromQuery] GetStockQuery query, CancellationToken cancellationToken)
-        //{
-        //    var result = await Mediator.Send(query, cancellationToken);
-
-        //    if (result is null)
-        //        return NotFound();
-
-        //    return Ok(result);
-        //}
-
         /// <summary>
         /// Gets stocks list
         /// </summary>
@@ -51,11 +30,35 @@ namespace TrendSense.WebApi.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<StockDto>> Get([FromQuery] GetDbStocksQuery query, CancellationToken cancellationToken)
+        public async Task<ActionResult<PagedResult<StockDto>>> Get([FromQuery] GetDbStocksQuery query, CancellationToken cancellationToken)
         {
             var result = await Mediator.Send(query, cancellationToken);
 
             return Ok(result);
+        }
+
+        /// <summary>
+        /// Gets stock by id
+        /// </summary>
+        /// <param name="command"></param>
+        /// <returns>
+        /// Returns StockDto
+        /// </returns>
+        /// <response code="200">Success</response>
+        /// <response code="401">If the user is unauthorized</response>
+        [HttpGet("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<StockDto>> GetById(Guid id, CancellationToken cancellationToken)
+        {
+            var stock = await Mediator.Send(new GetDbStockByIdQuery { Id = id }, cancellationToken);
+
+            if (stock is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(stock);
         }
 
         /// <summary>

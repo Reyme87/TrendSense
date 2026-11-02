@@ -1,5 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Data.Entity;
+using TrendSense.Application.Common.Caching;
 using TrendSense.Application.Features.Stocks.Commands.SyncStocks;
 using TrendSense.Application.Interfaces;
 using TrendSense.Domain;
@@ -21,6 +23,8 @@ namespace TrendSense.Application.Features.Stocks.Commands
             _logger.LogInformation("Starting stocks synchronization");
 
             var marketStocks = await _stockMarketService.GetStocksListAsync(cancellationToken);
+            var existingStocks = await _dbContext.Stocks.ToListAsync(cancellationToken);
+            var stocksByTicker = existingStocks.ToDictionary(x => x.TickerSymbol);
 
             foreach (var marketStock in marketStocks)
             {
@@ -29,10 +33,7 @@ namespace TrendSense.Application.Features.Stocks.Commands
                     continue;
                 }
 
-                //var stock = await _dbContext.Stocks.FirstOrDefaultAsync(s => s.TickerSymbol == marketStock.SecId, cancellationToken);
-                var stock = _dbContext.Stocks.FirstOrDefault(x => x.TickerSymbol == marketStock.SecId);
-
-                if (stock is null)
+                if (!stocksByTicker.TryGetValue(marketStock.SecId, out var stock))
                 {
                     stock = new Stock
                     {
@@ -49,6 +50,8 @@ namespace TrendSense.Application.Features.Stocks.Commands
                     };
 
                     _dbContext.Stocks.Add(stock);
+
+                    stocksByTicker.Add(stock.TickerSymbol, stock);
                 }
                 else
                 {
@@ -62,7 +65,7 @@ namespace TrendSense.Application.Features.Stocks.Commands
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            await _cache.RemoveAsync("stocks:all", cancellationToken);
+            await _cache.SetAsync(CacheKeys.StocksVersion, Guid.NewGuid().ToString("N"), TimeSpan.FromDays(365), cancellationToken);
 
             _logger.LogInformation("Synchronization completed");
 

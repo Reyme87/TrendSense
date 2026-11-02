@@ -53,7 +53,7 @@ namespace TrendSense.Application.Features.Stocks.Commands.UpdateStockPrices
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            await _cache.RemoveAsync(CacheKeys.Stocks, cancellationToken);
+            await _cache.SetAsync(CacheKeys.StocksVersion, Guid.NewGuid().ToString("N"), TimeSpan.FromDays(365), cancellationToken);
 
             foreach (var stockId in updatedStockIds)
             {

@@ -16,6 +16,8 @@ Backend-сервис на ASP.NET Core для отслеживания коти�
 ![Swagger](https://img.shields.io/badge/Swagger-API_Docs-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 ![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-caching-red?style=for-the-badge&logo=redis&logoColor=%23FF4438)
+![VueJs](https://img.shields.io/badge/VueJs-frontend-green?style=for-the-badge&logo=vuedotjs&logoColor=%234FC08D)
 
 </div>
 
@@ -30,6 +32,9 @@ Backend-сервис на ASP.NET Core для отслеживания коти�
 ![Visual Studio](https://skillicons.dev/icons?i=visualstudio)
 ![Git](https://skillicons.dev/icons?i=git)
 ![GitHub](https://skillicons.dev/icons?i=github)
+![Vue](https://skillicons.dev/icons?i=vue)
+![Redis](https://skillicons.dev/icons?i=redis)
+![TypeScript](https://skillicons.dev/icons?i=ts)
 
 </div>
 
@@ -45,6 +50,12 @@ Backend-сервис на ASP.NET Core для отслеживания коти�
 - **WebApi** — контроллеры, middleware, Swagger
 
 Каждый слой зависит только от более внутренних, что позволяет менять источник данных или хранилище без переписывания бизнес-логики.
+
+Frontend часть, написанная на VueJs состоит из следующих слоёв:
+- **Router** - маршрутизатор между экранами
+- **Services** - основные сервисы для работы с данными
+- **Types** - типы данных
+- **Views** - компоненты экранов
 
 <br>
 
@@ -85,7 +96,9 @@ WatchList
 - API versioning;
 - Swagger/OpenAPI;
 - unit-тесты;
-- Docker.
+- Docker;
+- VueJs;
+- Redis.
 
 ## Быстрый старт
 
